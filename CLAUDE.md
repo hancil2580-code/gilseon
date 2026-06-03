@@ -88,6 +88,14 @@ This project includes a set of composable skills in `skills/`. Use them as follo
 | `understand-explain` | Deep-dive into a specific file, function, or module |
 | `understand-knowledge` | Analyze a Karpathy-pattern LLM wiki knowledge base |
 | `understand-onboard` | Generate an onboarding guide for new team members |
+| `handoff` | Resume the most recent session — "where were we" / "pick up where we left off" |
+| `recall` | Search past sessions and learnings about a topic |
+| `recap` | Summarize last N sessions / today / this week |
+| `remember` | Explicitly save an insight or decision to long-term memory |
+| `forget` | Delete specific observations or sessions for privacy |
+| `session-history` | Show what happened in recent past sessions |
+| `commit-context` | Trace a file/function back to the agent session that produced its commit |
+| `commit-history` | List recent commits linked to agent sessions |
 
 ### Skill Priority
 
