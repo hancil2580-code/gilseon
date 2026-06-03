@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CapCut Agent</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --card: #161616;
+  --border: #222;
+  --text: #e5e5e5;
+  --muted: #666;
+  --green: #22c55e;
+  --green-dim: rgba(34,197,94,.12);
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Inter', sans-serif;
+  font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+
+/* header */
+header { margin-bottom: 48px; }
+.logo { font-family: var(--mono); font-size: 13px; color: var(--green); letter-spacing: .08em;
+  text-transform: uppercase; margin-bottom: 12px; }
+h1 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; }
+.sub { color: var(--muted); margin-top: 6px; font-size: 13px; }
+
+/* drop zone */
+.drop { border: 1px dashed var(--border); border-radius: 8px; padding: 48px 24px;
+  text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
+.drop:hover, .drop.over { border-color: var(--green); background: var(--green-dim); }
+.drop input { display: none; }
+.drop-icon { font-size: 28px; margin-bottom: 12px; opacity: .4; }
+.drop-label { font-size: 13px; color: var(--muted); }
+.drop-label strong { color: var(--text); }
+.chip { display: inline-block; font-family: var(--mono); font-size: 11px;
+  background: #1e1e1e; border: 1px solid var(--border); border-radius: 4px;
+  padding: 2px 7px; margin: 2px 2px 0; color: var(--muted); }
+
+/* settings */
+.settings { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 6px; font-family: var(--mono); }
+.field select, .field input[type=range] { width: 100%; }
+.field select { background: var(--card); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 7px 10px; font-size: 13px; appearance: none;
+  cursor: pointer; outline: none; }
+.field select:focus { border-color: var(--green); }
+.range-row { display: flex; align-items: center; gap: 8px; }
+.range-row input { flex: 1; accent-color: var(--green); }
+.range-val { font-family: var(--mono); font-size: 12px; color: var(--green); min-width: 36px; text-align: right; }
+
+/* run button */
+.btn { display: block; width: 100%; margin-top: 20px; padding: 12px;
+  background: var(--green); color: #000; font-size: 14px; font-weight: 600;
+  border: none; border-radius: 8px; cursor: pointer; transition: opacity .15s;
+  letter-spacing: .01em; }
+.btn:hover { opacity: .88; }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* hr */
+hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+/* stepper */
+.stepper { display: flex; flex-direction: column; gap: 0; }
+.step { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; position: relative; }
+.step + .step { border-top: 1px solid var(--border); }
+.dot-col { display: flex; flex-direction: column; align-items: center; padding-top: 3px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); flex-shrink: 0;
+  transition: background .3s, box-shadow .3s; }
+.dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.done { background: var(--green); }
+.dot.error { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+.step-body { flex: 1; min-width: 0; }
+.step-name { font-size: 11px; font-family: var(--mono); text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); margin-bottom: 2px; }
+.step-msg { font-size: 13px; }
+.step-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* progress bar */
+.progress-wrap { margin-top: 24px; }
+.progress-bar { height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--green); transition: width .4s ease;
+  width: 0%; border-radius: 1px; }
+.progress-pct { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 6px;
+  text-align: right; }
+
+/* stats grid */
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px;
+  background: var(--border); border-radius: 8px; overflow: hidden; margin-top: 24px; }
+.stat { background: var(--card); padding: 16px; }
+.stat-val { font-family: var(--mono); font-size: 22px; font-weight: 600;
+  letter-spacing: -.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* transcript */
+.transcript { margin-top: 24px; }
+.transcript-head { font-size: 11px; font-family: var(--mono); text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+.script-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; font-size: 13px; line-height: 1.8; max-height: 200px; overflow-y: auto;
+  color: #ccc; }
+.seg-list { margin-top: 12px; display: flex; flex-direction: column; gap: 2px; max-height: 280px;
+  overflow-y: auto; }
+.seg-item { display: flex; gap: 10px; align-items: baseline; font-size: 12px;
+  padding: 6px 10px; border-radius: 5px; }
+.seg-item:hover { background: #1a1a1a; }
+.seg-time { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.seg-text { color: var(--text); }
+
+/* download btn */
+.dl-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px;
+  background: var(--card); border: 1px solid var(--green); color: var(--green);
+  font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 7px;
+  cursor: pointer; text-decoration: none; transition: background .15s; font-family: inherit; }
+.dl-btn:hover { background: var(--green-dim); }
+
+/* hidden */
+.hidden { display: none !important; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- header -->
+  <header>
+    <div class="logo">CapCut Agent</div>
+    <h1>한국어 영상 자동 편집기</h1>
+    <p class="sub">무음·잔말·NG 컷 + 단어별 자막 → 캡컷 드래프트 출력</p>
+  </header>
+
+  <!-- upload -->
+  <div class="drop" id="drop" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.webm">
+    <div class="drop-icon">🎬</div>
+    <div class="drop-label">
+      <strong>영상 파일을 드래그하거나 클릭해서 선택</strong><br>
+      <span class="chip">.mp4</span>
+      <span class="chip">.mov</span>
+      <span class="chip">.avi</span>
+      <span class="chip">.mkv</span>
+    </div>
+  </div>
+
+  <!-- settings -->
+  <div class="settings">
+    <div class="field">
+      <label>Whisper 모델</label>
+      <select id="whisperModel">
+        <option value="tiny">tiny — 빠름 (정확도↓)</option>
+        <option value="base" selected>base — 권장</option>
+        <option value="small">small — 정확 (느림)</option>
+        <option value="medium">medium — 고정확</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>언어</label>
+      <select id="language">
+        <option value="ko" selected>한국어</option>
+        <option value="en">English</option>
+        <option value="ja">日本語</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>무음 기준 (dB)</label>
+      <div class="range-row">
+        <input type="range" id="silenceDb" min="-60" max="-20" step="1" value="-40">
+        <span class="range-val" id="silenceDbVal">-40</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>최소 무음 길이 (초)</label>
+      <div class="range-row">
+        <input type="range" id="minSilence" min="0.1" max="2.0" step="0.1" value="0.4">
+        <span class="range-val" id="minSilenceVal">0.4s</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="runBtn" disabled>영상 선택 후 편집 시작</button>
+
+  <hr id="resultHr" class="hidden">
+
+  <!-- stepper -->
+  <div id="stepperWrap" class="hidden">
+    <div class="stepper" id="stepper">
+      <div class="step" id="step-silence">
+        <div class="dot-col"><div class="dot" id="dot-silence"></div></div>
+        <div class="step-body">
+          <div class="step-name">Silence</div>
+          <div class="step-msg" id="msg-silence">대기 중</div>
+          <div class="step-meta" id="meta-silence"></div>
+        </div>
+      </div>
+      <div class="step" id="step-asr">
+        <div class="dot-col"><div class="dot" id="dot-asr"></div></div>
+        <div class="step-body">
+          <div class="step-name">ASR</div>
+          <div class="step-msg" id="msg-asr">대기 중</div>
+          <div class="step-meta" id="meta-asr"></div>
+        </div>
+      </div>
+      <div class="step" id="step-filler">
+        <div class="dot-col"><div class="dot" id="dot-filler"></div></div>
+        <div class="step-body">
+          <div class="step-name">Filler / NG</div>
+          <div class="step-msg" id="msg-filler">대기 중</div>
+          <div class="step-meta" id="meta-filler"></div>
+        </div>
+      </div>
+      <div class="step" id="step-draft">
+        <div class="dot-col"><div class="dot" id="dot-draft"></div></div>
+        <div class="step-body">
+          <div class="step-name">Draft</div>
+          <div class="step-msg" id="msg-draft">대기 중</div>
+          <div class="step-meta" id="meta-draft"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-pct" id="progressPct">0%</div>
+    </div>
+  </div>
+
+  <!-- result -->
+  <div id="resultWrap" class="hidden">
+    <div class="stats" id="statsGrid"></div>
+
+    <div class="transcript" id="transcriptWrap">
+      <div class="transcript-head">스크립트 전문</div>
+      <div class="script-box" id="scriptBox"></div>
+      <div class="seg-list" id="segList"></div>
+    </div>
+
+    <a class="dl-btn" id="dlBtn" href="#" download>
+      ↓ 드래프트 ZIP 다운로드
+    </a>
+    <p style="margin-top:10px;font-size:12px;color:var(--muted)">
+      압축 해제 후 <code style="font-family:var(--mono);color:#aaa">draft_info.json</code> 폴더를 캡컷 드래프트 폴더로 복사하세요.
+    </p>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// ── range 라벨 ─────────────────────────────────────────────
+$('silenceDb').addEventListener('input', e => { $('silenceDbVal').textContent = e.target.value; });
+$('minSilence').addEventListener('input', e => { $('minSilenceVal').textContent = e.target.value + 's'; });
+
+// ── drag & drop ───────────────────────────────────────────
+const drop = $('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+$('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+let currentJobId = null;
+let currentFile = null;
+
+function handleFile(file) {
+  currentFile = file;
+  drop.querySelector('.drop-label').innerHTML =
+    `<strong>${file.name}</strong><br><span style="color:var(--muted)">${(file.size/1e6).toFixed(1)} MB</span>`;
+  $('runBtn').textContent = '편집 시작';
+  $('runBtn').disabled = false;
+}
+
+// ── 편집 실행 ─────────────────────────────────────────────
+$('runBtn').addEventListener('click', async () => {
+  if (!currentFile) return;
+  $('runBtn').disabled = true;
+  $('runBtn').textContent = '업로드 중…';
+
+  // reset UI
+  ['silence','asr','filler','draft'].forEach(s => {
+    $(`dot-${s}`).className = 'dot';
+    $(`msg-${s}`).textContent = '대기 중';
+    $(`meta-${s}`).textContent = '';
+  });
+  $('resultHr').classList.add('hidden');
+  $('stepperWrap').classList.remove('hidden');
+  $('resultWrap').classList.add('hidden');
+  $('progressFill').style.width = '0%';
+  $('progressPct').textContent = '0%';
+
+  // upload
+  const fd = new FormData();
+  fd.append('file', currentFile);
+  const up = await fetch('/upload', { method: 'POST', body: fd });
+  const { job_id, error } = await up.json();
+  if (error) { alert(error); $('runBtn').disabled = false; return; }
+
+  currentJobId = job_id;
+  $('runBtn').textContent = '처리 중…';
+
+  const params = new URLSearchParams({
+    silence_db: $('silenceDb').value,
+    min_silence: $('minSilence').value,
+    whisper_model: $('whisperModel').value,
+    language: $('language').value,
+  });
+
+  const es = new EventSource(`/process/${job_id}?${params}`);
+  es.onmessage = e => {
+    const d = JSON.parse(e.data);
+    handleEvent(d);
+    if (d.step === 'done' || d.step === 'error') {
+      es.close();
+      $('runBtn').disabled = false;
+      $('runBtn').textContent = '다시 편집';
+    }
+  };
+  es.onerror = () => { es.close(); $('runBtn').disabled = false; $('runBtn').textContent = '다시 편집'; };
+});
+
+function handleEvent(d) {
+  // progress
+  $('progressFill').style.width = d.pct + '%';
+  $('progressPct').textContent = d.pct + '%';
+
+  const step = d.step === 'done' ? 'draft' : d.step;
+
+  if (d.step === 'error') {
+    ['silence','asr','filler','draft'].forEach(s => {
+      if ($(`dot-${s}`).classList.contains('active'))
+        $(`dot-${s}`).className = 'dot error';
+    });
+    return;
+  }
+
+  // stepper dots
+  const order = ['silence','asr','filler','draft'];
+  const idx = order.indexOf(step);
+  order.forEach((s, i) => {
+    const dot = $(`dot-${s}`);
+    if (i < idx) dot.className = 'dot done';
+    else if (i === idx) dot.className = 'dot active';
+    else dot.className = 'dot';
+  });
+
+  if (d.step !== 'done') {
+    $(`msg-${step}`).textContent = d.msg;
+    // meta
+    const parts = [];
+    if (d.silence_count !== undefined) parts.push(`무음 ${d.silence_count}개 · ${d.silence_sec}s 제거`);
+    if (d.segment_count !== undefined) parts.push(`세그먼트 ${d.segment_count}개`);
+    if (d.filler_count !== undefined) parts.push(`잔말 ${d.filler_count} / NG ${d.ng_count} · ${d.removed_sec}s 제거`);
+    if (d.draft_path !== undefined) parts.push(d.draft_path);
+    if (d.script_preview) parts.push(`"${d.script_preview}…"`);
+    $(`meta-${step}`).textContent = parts.join('  ·  ');
+  }
+
+  if (d.step === 'done') {
+    // mark all done
+    order.forEach(s => { $(`dot-${s}`).className = 'dot done'; });
+    $('msg-draft').textContent = d.msg;
+
+    $('resultHr').classList.remove('hidden');
+    $('resultWrap').classList.remove('hidden');
+
+    // stats
+    $('statsGrid').innerHTML = [
+      { val: d.original_sec + 's', label: '원본 길이' },
+      { val: d.kept_sec + 's', label: '편집 후 길이' },
+      { val: d.removed_sec + 's', label: '제거된 시간' },
+      { val: d.silence_count, label: '무음 컷' },
+      { val: d.filler_count, label: '잔말 컷' },
+      { val: d.ng_count, label: 'NG 컷' },
+    ].slice(0, 3).concat([
+      { val: d.silence_count, label: '무음 컷' },
+      { val: d.filler_count, label: '잔말 컷' },
+      { val: d.ng_count, label: 'NG 컷' },
+    ]).slice(0, 6).map(s =>
+      `<div class="stat"><div class="stat-val">${s.val}</div><div class="stat-label">${s.label}</div></div>`
+    ).join('');
+
+    // rebuild with 6 stats
+    $('statsGrid').innerHTML = [
+      { val: d.original_sec + 's', label: '원본 길이' },
+      { val: d.kept_sec + 's', label: '편집 후 길이' },
+      { val: d.removed_sec + 's', label: '제거된 시간' },
+      { val: d.silence_count, label: '무음 컷' },
+      { val: d.filler_count, label: '잔말 컷' },
+      { val: d.ng_count, label: 'NG 컷' },
+    ].map(s =>
+      `<div class="stat"><div class="stat-val">${s.val}</div><div class="stat-label">${s.label}</div></div>`
+    ).join('');
+
+    // script
+    $('scriptBox').textContent = d.script || '';
+
+    // segments
+    $('segList').innerHTML = (d.segments || []).map(s =>
+      `<div class="seg-item">
+        <span class="seg-time">${fmt(s.start)} → ${fmt(s.end)}</span>
+        <span class="seg-text">${esc(s.text)}</span>
+      </div>`
+    ).join('');
+
+    // download
+    $('dlBtn').href = `/download/${currentJobId}`;
+  }
+}
+
+function fmt(sec) {
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(1).padStart(4, '0');
+  return `${m}:${s}`;
+}
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
