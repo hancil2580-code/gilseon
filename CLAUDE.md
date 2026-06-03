@@ -80,6 +80,14 @@ This project includes a set of composable skills in `skills/`. Use them as follo
 | `receiving-code-review` | When processing review feedback |
 | `finishing-a-development-branch` | When implementation is complete and ready to integrate |
 | `using-superpowers` | At session start — establishes how to find and invoke skills |
+| `understand` | Analyze codebase → build interactive knowledge graph |
+| `understand-chat` | Ask questions about the codebase using the knowledge graph |
+| `understand-dashboard` | Open web dashboard to visualize the knowledge graph |
+| `understand-diff` | Analyze git diff/PR impact — what changed and what's affected |
+| `understand-domain` | Extract business domain knowledge and flow graph |
+| `understand-explain` | Deep-dive into a specific file, function, or module |
+| `understand-knowledge` | Analyze a Karpathy-pattern LLM wiki knowledge base |
+| `understand-onboard` | Generate an onboarding guide for new team members |
 
 ### Skill Priority
 
