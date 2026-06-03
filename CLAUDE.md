@@ -63,3 +63,26 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## Skills
+
+This project includes a set of composable skills in `skills/`. Use them as follows:
+
+| Skill | When to use |
+|-------|-------------|
+| `brainstorming` | Before any feature work — explore requirements, propose approaches, get approval |
+| `writing-plans` | After brainstorming — create a step-by-step implementation plan |
+| `executing-plans` | When you have a written plan to implement |
+| `test-driven-development` | When implementing any feature or bugfix |
+| `systematic-debugging` | Before proposing any fix — find root cause first |
+| `verification-before-completion` | Before claiming work is done — run verification, show evidence |
+| `requesting-code-review` | After completing a task or feature |
+| `receiving-code-review` | When processing review feedback |
+| `finishing-a-development-branch` | When implementation is complete and ready to integrate |
+| `using-superpowers` | At session start — establishes how to find and invoke skills |
+
+### Skill Priority
+
+1. User's explicit instructions (this file, direct requests) — highest priority
+2. Skills — override default behavior where they conflict
+3. Default system behavior — lowest priority
